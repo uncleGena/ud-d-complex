@@ -1,0 +1,48 @@
+version: '3'
+services:
+  ud-d-postgres:
+    image: 'postgres:latest'
+  ud-d-redis:
+    image: 'redis:latest'
+  ud-d-server:
+    depends_on:
+      - ud-d-postgres
+    build:
+      dockerfile: docker/dev/Dockerfile
+      context: ./server
+    volumes:
+      - /app/node_modules
+      - ./server:/app
+    environment:
+      - REDIS_HOST=ud-d-redis
+      - REDIS_PORT=6379
+      - PGUSER=postgres
+      - PGHOST=ud-d-postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPORT=5432
+  ud-d-client:
+    build:
+      dockerfile: docker/dev/Dockerfile
+      context: ./client
+    volumes:
+      - /app/node_modules
+      - ./client:/app
+  ud-d-worker:
+    environment:
+      - REDIS_HOST=ud-d-redis
+      - REDIS_PORT=6379
+    build:
+      dockerfile: docker/dev/Dockerfile
+      context: ./worker
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+  ud-d-nginx:
+    restart: always
+    build:
+      dockerfile: docker/dev/Dockerfile
+      context: ./nginx
+    ports:
+      - '3050:80'
+    
